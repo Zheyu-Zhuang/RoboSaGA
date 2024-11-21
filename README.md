@@ -11,7 +11,7 @@ This is the official implementation of RoboSaGA, a data augmentation technique d
 
 ### 🔧 Tweaks
 - **Colour Jittering**: Enabled by default.
-- **Pre-trained ResNet Weights**: Loaded for faster convergence and saliency feature extraction.
+- **Pre-trained ResNet Weights**: Loaded for faster convergence and better saliency.
 - **Average Pooling**: Replaces Spatial Softmax for better saliency. Spatial Softmax introduces a diamond-shaped gradient prior, as its gradient computation depends on the constant multipliers introduced by coordinate grids.
 
 These adjustments, particularly the combination of pre-trained weights and Average Pooling, significantly enhance policy robustness in **transport** tasks for BC-MLP and BC-RNN.
@@ -35,9 +35,6 @@ To install Mujoco200, run the following commands:
 ```sh
 chmod +x install_mujoco200.sh
 ./install_mujoco200.sh
-
-```
-```sh
 source ~/.bashrc
 ```
 
@@ -54,6 +51,9 @@ conda env create -f environment.yaml
 Datasets are stored within the `data` folder.
 
 1. Unzip the `backgrounds.zip` file, which contains all out-of-domain images for data augmentation.
+    ```sh
+    unzip backgrounds.zip -d data/
+    ```
 2. Download the robomimic datasets from [this link](https://diffusion-policy.cs.columbia.edu/data/training/).
 3. Unzip the robomimic dataset to the corresponding path. For example, for the transport task, the proficient human (ph) dataset should be stored under `./data/robomimic/transport/ph`.
 
