@@ -9,4 +9,4 @@ wget https://roboti.us/file/mjkey.txt -P $MUJOCO_DIR
 rm $MUJOCO_DIR/mujoco200.zip
 
 # Export the install path to bashrc
-echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:$MUJOCO_DIR/mujoco200_linux/bin" >> ~/.bashrc
+echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:$MUJOCO_DIR/mujoco200/bin" >> ~/.bashrc
