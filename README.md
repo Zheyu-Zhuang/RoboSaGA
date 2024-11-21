@@ -1,7 +1,6 @@
 # RoboSaGA 
 
-**Enhancing Visual Domain Robustness in Behaviour Cloning via Saliency-Guided Augmentation, CoRL 2024**
-\[[Paper](https://openreview.net/forum?id=CskuWHDBAr)\]
+**Enhancing Visual Domain Robustness in Behaviour Cloning via Saliency-Guided Augmentation, CoRL 2024**\[[Paper](https://openreview.net/forum?id=CskuWHDBAr)\]
 
 This is the official implementation of RoboSaGA, a data augmentation technique designed to improve generalization against changes in lighting, shadows, the presence of distractors, and variations in table textures and backgrounds in the context of behavior cloning.
 
@@ -35,7 +34,6 @@ To install Mujoco200, run the following commands:
 ```sh
 chmod +x install_mujoco200.sh
 ./install_mujoco200.sh
-source ~/.bashrc
 ```
 
 ### Create the Conda Environment
