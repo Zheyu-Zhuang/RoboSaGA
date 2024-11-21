@@ -33,8 +33,12 @@ These adjustments, particularly the combination of pre-trained weights and Avera
 To install Mujoco200, run the following commands:
 
 ```sh
-chmod +x install_mujoco.sh
-./install_mujoco.sh
+chmod +x install_mujoco200.sh
+./install_mujoco200.sh
+
+```
+```sh
+source ~/.bashrc
 ```
 
 ### Create the Conda Environment

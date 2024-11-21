@@ -1,4 +1,4 @@
-name: robosaga
+name: robosaga_test
 channels:
   - pytorch
   - pytorch3d
@@ -55,6 +55,7 @@ dependencies:
   # trick to force reinstall imagecodecs via pip
   - imagecodecs==2022.8.8
   - pip:
+    - albumentations
     - ray[default,tune]==2.2.0
     # requires mujoco py dependencies libosmesa6-dev libgl1-mesa-glx libglfw3 patchelf
     - pygame==2.1.2
