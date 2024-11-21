@@ -45,6 +45,10 @@ Create the Conda environment using the provided `environment.yaml` file:
 ```sh
 conda env create -f environment.yaml
 ```
+Activate
+```sh
+conda activate robosaga
+```
 
 ### Dataset
 
@@ -52,6 +56,7 @@ Datasets are stored within the `data` folder.
 
 1. Unzip the `backgrounds.zip` file, which contains all out-of-domain images for data augmentation.
     ```sh
+    mkdir data
     unzip backgrounds.zip -d data/
     ```
 2. Download the robomimic datasets from [this link](https://diffusion-policy.cs.columbia.edu/data/training/).

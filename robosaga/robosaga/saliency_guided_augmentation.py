@@ -1,19 +1,20 @@
+import os
+import random
+
+import cv2
 import numpy as np
 import torch
-import random
-import os
-import cv2
 
 try:
     from robomimic.models.obs_core import VisualCore
 except ImportError:
     from robomimic.models.base_nets import VisualCore
 
+import robosaga.vis_utils as vis_utils
 from robosaga.background_randomizer import BackgroundRandomizer
 from robosaga.buffer_manager import BufferManager
 from robosaga.fullgrad import FullGrad
 from robosaga.tensor_extractors import EncoderOnly
-import robosaga.vis_utils as vis_utils
 
 
 class RoboSaGA:

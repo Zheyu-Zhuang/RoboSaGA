@@ -1,4 +1,4 @@
-name: robosaga_test
+name: robosaga
 channels:
   - pytorch
   - pytorch3d

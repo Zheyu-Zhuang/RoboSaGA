@@ -1,7 +1,8 @@
 import os
-import torch 
+
 import cv2
 import numpy as np
+import torch
 
 
 def unnormalize_image(x, normalizer):
