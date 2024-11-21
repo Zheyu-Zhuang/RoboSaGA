@@ -1,6 +1,7 @@
 # RoboSaGA 
 
-**Enhancing Visual Domain Robustness in Behaviour Cloning via Saliency-Guided Augmentation, CoRL 2024**\[[Paper](https://openreview.net/forum?id=CskuWHDBAr)\]
+**Enhancing Visual Domain Robustness in Behaviour Cloning via Saliency-Guided Augmentation, CoRL 2024
+**\[[Paper](https://openreview.net/forum?id=CskuWHDBAr)\]
 
 This is the official implementation of RoboSaGA, a data augmentation technique designed to improve generalization against changes in lighting, shadows, the presence of distractors, and variations in table textures and backgrounds in the context of behavior cloning.
 
