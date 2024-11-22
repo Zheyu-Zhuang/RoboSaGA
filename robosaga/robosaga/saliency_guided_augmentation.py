@@ -18,12 +18,12 @@ from robosaga.tensor_extractors import EncoderOnly
 
 
 class RoboSaGA:
-    def __init__(self, model, **kwargs):
+    def __init__(self, model, normalizer=None, **kwargs):
         # Superimposition parameters
         # Erase & Erase Overlay
         self.saliency_erase_threshold = kwargs.get("saliency_erase_threshold", 0.5)
         # Blend Alpha for Random Overlay, Erase Overlay
-        self.alpha = kwargs.get("blend_alpha", 0.5)
+        self.blend_alpha = kwargs.get("blend_alpha", 0.5)
         # The cap for saliency values in RoboSaGA
         self.saliency_saga_cap = kwargs.get("saliency_saga_cap", 0.8)
 
@@ -35,27 +35,25 @@ class RoboSaGA:
         self.warmup_epochs = kwargs.get("warmup_epochs", 10)
 
         assert self.aug_ratio > 0, "aug_ratio should be greater than 0"
-        
+
         if self.aug_strategy == "robosaga":
             assert self.update_ratio > 0, "update_ratio should be greater than 0"
 
         self.disable_buffer = kwargs.get("disable_buffer", False)
 
         # Other attributes
-        self.save_debug_im_every_n_batches = kwargs.get(
-            "save_debug_im_every_n_batches", 50
-        )
+        self.save_debug_im_every_n_batches = kwargs.get("save_debug_im_every_n_batches", 50)
         self.debug_vis = kwargs.get("debug_vis", False)
         self.debug_save = kwargs.get("debug_save", True)
         self.save_dir = kwargs.get("save_dir", None)
-        self.normalizer = kwargs.get("normalizer", None)
+        self.normalizer = normalizer
         self.vis_out_dir = kwargs.get("vis_out_dir", None)
         self.output_shape = kwargs.get("output_shape", None)
         self.backgrounds = BackgroundRandomizer(**kwargs)
 
         # Indexes
-        self.epoch_idx = 0  # epoch index
-        self.batch_idx = 0  # batch index
+        self.epoch_idx = 0
+        self.batch_idx = 0
 
         # Registration status
         self.model = model
@@ -121,9 +119,7 @@ class RoboSaGA:
         if not self.is_training:
             return batch
         update_idx = self.get_update_batch_idx(golbal_idx, buffer)
-        smaps = self.extract_and_update(
-            batch, extractor, buffer, golbal_idx, update_idx, meta
-        )
+        smaps = self.extract_and_update(batch, extractor, buffer, golbal_idx, update_idx, meta)
         if self.disable_buffer:
             aug_idx = update_idx
         else:
@@ -137,7 +133,7 @@ class RoboSaGA:
             return batch
         aug_idx = torch.arange(int(batch.shape[0] * self.aug_ratio))
         bg = self.backgrounds(len(aug_idx), normalizer)
-        batch[aug_idx] = batch[aug_idx] * self.alpha + bg * (1 - self.alpha)
+        batch[aug_idx] = batch[aug_idx] * self.blend_alpha + bg * (1 - self.blend_alpha)
 
     def retrieve_smaps_from_buffer(self, buffer, golbal_idx, meta):
         aug_idx = torch.arange(int(len(golbal_idx) * self.aug_ratio))
@@ -147,7 +143,7 @@ class RoboSaGA:
         # thresholding
         strategy_values = {
             "erase": 1,
-            "erase_overlay": self.alpha,
+            "erase_overlay": self.blend_alpha,
         }
         if self.aug_strategy in strategy_values:
             smaps = torch.where(
@@ -163,9 +159,7 @@ class RoboSaGA:
             smaps = torch.clip(smaps, 0, self.saliency_saga_cap)
         return aug_idx, smaps
 
-    def extract_and_update(
-        self, batch, extractor, buffer, golbal_idx, update_idx, meta
-    ):
+    def extract_and_update(self, batch, extractor, buffer, golbal_idx, update_idx, meta):
         if not self.is_training:
             return {}
         self.model.eval()
@@ -226,9 +220,7 @@ class RoboSaGA:
         else:
             smaps = extractor(rgb_ims_).detach()
             aug_vis = None
-        rgb_ims = vis_utils.batch_to_ims(
-            vis_utils.unnormalize_image(rgb_ims_, normalizer)
-        )
+        rgb_ims = vis_utils.batch_to_ims(vis_utils.unnormalize_image(rgb_ims_, normalizer))
         rgb_smaps = vis_utils.batch_to_ims(vis_utils.normalize_smaps(smaps))
         smaps_vis = 0.5 * rgb_ims + 0.5 * rgb_smaps
         smaps_vis = np.clip(smaps_vis, 0, 255).astype(np.uint8)
@@ -318,6 +310,7 @@ class RoboSaGA:
             if isinstance(v, VisualCore):
                 extractors[k] = FullGrad(v, k, EncoderOnly)
                 if not self.disable_buffer:
+                    print(f"Obs Modality: {k}")
                     buffers[k] = BufferManager(**kwargs)
         return extractors, buffers
 
@@ -330,13 +323,12 @@ class RoboSaGA:
             raise ValueError("obs_encoder cannot be found in the model")
 
     def check_augmentation_strategy(self):
-        print(self.aug_strategy)
         assert self.aug_strategy in [
             "robosaga",
             "random_overlay",
             "erase",
             "erase_overlay",
-        ], "Invalid aug_strategy"
+        ], f"Invalid augmentation strategy: {self.aug_strategy}"
         assert self.aug_ratio is not None, "aug_ratio is required"
         if self.aug_strategy == "random_overlay":
             if not self.disable_buffer:
@@ -348,24 +340,24 @@ class RoboSaGA:
             "aug_strategy",
             "aug_ratio",
             "warmup_epochs",
+            "saliency_erase_threshold",
+            "saliency_saga_cap",
+            "blend_alpha",
             "update_ratio",
             "disable_buffer",
+            "output_shape",
             "backgrounds",
             "save_dir",
         ]
 
         for arg in required_args:
             if arg not in self.__dict__:
-                raise ValueError(f"Argument {arg} is required for MomentumSaliency")
+                raise ValueError(f"Argument {arg} is required for RoboSaGA")
         if print_args:
-            print(
-                "\n==================== Saliency-guided Augmentation Parameters ===================="
-            )
+            print("\n=============== Saliency-guided Augmentation Parameters ===============")
             for arg in required_args:
                 if isinstance(self.__dict__[arg], torch.Tensor):
                     print(f"{arg} shape: {list(self.__dict__[arg].shape)}")
                 else:
                     print(f"{arg}: {self.__dict__[arg]}")
-            print(
-                "======================================================================\n"
-            )
+            print("=========================================================================\n")

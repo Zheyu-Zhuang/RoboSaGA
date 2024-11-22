@@ -46,7 +46,7 @@ env_runner:
   past_action: ${past_action_visible}
   abs_action: *abs_action
   tqdm_interval_sec: 1.0
-  n_envs: 56
+  n_envs: 28
 # evaluation at this config requires a 16 core 64GB instance.
 
 dataset:
@@ -63,3 +63,4 @@ dataset:
   use_cache: True
   seed: 42
   val_ratio: 0.02
+  color_jitter: ${color_jitter}

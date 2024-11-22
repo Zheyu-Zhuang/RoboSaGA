@@ -132,14 +132,14 @@ class RobomimicImagePolicy(BaseImagePolicy):
     def set_normalizer(self, normalizer: LinearNormalizer):
         self.normalizer.load_state_dict(normalizer.state_dict())
 
-    def train_on_batch(self, batch, epoch_idx, batch_idx, validate=False):
+    def train_on_batch(self, batch, epoch_idx, batch_idx, validate=False, robosaga=None):
         nobs = self.normalizer.normalize(batch["obs"])
         nactions = self.normalizer["action"].normalize(batch["action"])
         robomimic_batch = {"obs": nobs, "actions": nactions}
         input_batch = self.model.process_batch_for_training(robomimic_batch)
 
-        if self.saga is not None:
-            input_batch["obs"] = self.saga(
+        if robosaga is not None:
+            input_batch["obs"] = robosaga(
                 input_batch["obs"], batch["ids"].flatten(), epoch_idx, batch_idx
             )
         info = self.model.train_on_batch(batch=input_batch, epoch=epoch_idx, validate=validate)

@@ -1,53 +1,73 @@
 defaults:
-  - _self_
-  - task: blue_block_pnp_real
+- _self_
+- task: can_image
 
 name: train_diffusion_unet_hybrid
-exp_name: "soda"
+exp_name: color_jitter
 
-_target_: diffusion_policy.workspace.train_diffusion_unet_hybrid_workspace.TrainDiffusionUnetHybridWorkspace
+_target_: 
+  diffusion_policy.workspace.train_diffusion_unet_hybrid_workspace.TrainDiffusionUnetHybridWorkspace
 
 task_name: ${task.name}
 shape_meta: ${task.shape_meta}
-# exp_name: "default"
 
 horizon: 16
 n_obs_steps: 2
 n_action_steps: 8
 n_latency_steps: 0
 dataset_obs_steps: ${n_obs_steps}
-past_action_visible: False
+past_action_visible: false
 keypoint_visible_rate: 1.0
-obs_as_global_cond: True
+obs_as_global_cond: true
+color_jitter: true
 
 # -------------------------- pay attention here !!! ------------------------- #
-use_ema: True
-normalize_obs: True
+use_ema: true
+normalize_obs: true
 group_norm:
-  enable: True
-  return_fullgrad_bias: False
+  enable: true
+  return_fullgrad_bias: false
+robomimic_visual_encoder:
+  pretrained: true
+  pool_class: SpatialMeanPool # replaced "SpatialSoftmax"
 
+saliency:
+  enabled: false
+  aug_strategy: robosaga
+  warmup_epochs: 10
+  saliency_saga_cap: 0.8
+  saliency_erase_threshold: 0.5
+  blend_alpha: 0.5
+  update_ratio: 0.1  # update 10% of the buffer per training batch
+  aug_ratio: 0.5  # augment 50% of the trajectories in the batch
+  buffer_shape: [84, 84]
+  output_shape: [76, 76]
+  buffer_depth:
+  debug_vis: false
+  debug_save: true
+  save_dir: ''
+  save_debug_im_every_n_batches: 50
+  background_path: ../data/backgrounds/
 
 soda:
-  background_path: ../data/coco_5k_84x84/
+  background_path: ../data/backgrounds/
+
 # ---------------------------------------------------------------------------- #
 
 policy:
-  _target_: diffusion_policy.policy.diffusion_unet_hybrid_image_policy_soda.DiffusionUnetHybridImagePolicySODA
+  _target_: 
+    diffusion_policy.policy.diffusion_unet_hybrid_image_policy.DiffusionUnetHybridImagePolicy
 
   shape_meta: ${shape_meta}
-  
+
   noise_scheduler:
-    _target_: diffusers.schedulers.scheduling_ddim.DDIMScheduler
+    _target_: diffusers.schedulers.scheduling_ddpm.DDPMScheduler
     num_train_timesteps: 100
     beta_start: 0.0001
     beta_end: 0.02
-    # beta_schedule is important
-    # this is the best we found
     beta_schedule: squaredcos_cap_v2
-    clip_sample: True
-    set_alpha_to_one: True
-    steps_offset: 0
+    variance_type: fixed_small # Yilun's paper uses fixed_small_log instead, but easy to cause Nan
+    clip_sample: true # required when predict_epsilon=False
     prediction_type: epsilon # or sample
 
   horizon: ${horizon}
@@ -61,14 +81,10 @@ policy:
   down_dims: [512, 1024, 2048]
   kernel_size: 5
   n_groups: 8
-  cond_predict_scale: True
+  cond_predict_scale: true
   normalize_obs: ${normalize_obs}
-  eval_fixed_crop: True
+  eval_fixed_crop: true
   group_norm: ${group_norm}
-  soda_config: ${soda}
-
-  # scheduler.step params
-  # predict_epsilon: True
 
 ema:
   _target_: diffusion_policy.model.diffusion.ema_model.EMAModel
@@ -81,16 +97,16 @@ ema:
 dataloader:
   batch_size: 64
   num_workers: 16
-  shuffle: True
-  pin_memory: True
-  persistent_workers: False
+  shuffle: true
+  pin_memory: true
+  persistent_workers: false
 
 val_dataloader:
   batch_size: 64
   num_workers: 16
-  shuffle: False
-  pin_memory: True
-  persistent_workers: False
+  shuffle: false
+  pin_memory: true
+  persistent_workers: false
 
 optimizer:
   _target_: torch.optim.AdamW
@@ -100,10 +116,10 @@ optimizer:
   weight_decay: 1.0e-6
 
 training:
-  device: "cuda:0"
+  device: cuda:0
   seed: 42
-  debug: False
-  resume: True
+  debug: false
+  resume: true
   # optimization
   lr_scheduler: cosine
   lr_warmup_steps: 500
@@ -119,40 +135,40 @@ training:
   val_every: 1
   sample_every: 5
   # steps per epoch
-  max_train_steps: null
-  max_val_steps: null
+  max_train_steps:
+  max_val_steps:
   # misc
   tqdm_interval_sec: 1.0
 
 logging:
   project: ${task_name}
-  resume: True
+  resume: true
   mode: online
   name: ${task_name}_${name}_${exp_name}
-  tags: ["${name}", "${task_name}"]
-  id: null
-  group: null
-  allow_val_change: True
+  tags: ['${name}', '${task_name}']
+  id:
+  group:
+  allow_val_change: true
 
 
 checkpoint:
   topk:
-    monitor_key: train_loss
-    mode: min
+    monitor_key: test_mean_score
+    mode: max
     k: 5
-    format_str: 'epoch={epoch:04d}-train_loss={train_loss:.3f}.ckpt'
-  save_last_ckpt: True
-  save_last_snapshot: False
+    format_str: epoch={epoch:04d}-test_mean_score={test_mean_score:.3f}.ckpt
+  save_last_ckpt: true
+  save_last_snapshot: false
 
 multi_run:
-  run_dir: ../experiments/robosaga/${task_name}/diffusion_policy/${exp_name}
+  run_dir: ../experiments/${task_name}/diffusion_policy/${exp_name}
   wandb_name_base: ${now:%Y.%m.%d-%H.%M.%S}_${name}_${task_name}
 
 hydra:
   job:
     override_dirname: ${name}
   run:
-    dir: ../experiments/robosaga/${task_name}/diffusion_policy/${exp_name}
+    dir: ../experiments/${task_name}/diffusion_policy/${exp_name}
   sweep:
-    dir: ../experiments/robosaga/${task_name}/diffusion_policy/${exp_name}
+    dir: ../experiments/${task_name}/diffusion_policy/${exp_name}
     subdir: ${hydra.job.num}

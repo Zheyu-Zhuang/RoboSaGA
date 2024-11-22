@@ -30,7 +30,15 @@ from diffusion_policy.model.common.rotation_transformer import RotationTransform
 from diffusion_policy.policy.base_image_policy import BaseImagePolicy
 
 
-def create_env(env_meta, shape_meta, enable_render=True, distractors=False, rand_texture=False, env_id=None, lighting_mode='default'):
+def create_env(
+    env_meta,
+    shape_meta,
+    enable_render=True,
+    distractors=False,
+    rand_texture=False,
+    env_id=None,
+    lighting_mode="default",
+):
     modality_mapping = collections.defaultdict(list)
     for key, attr in shape_meta["obs"].items():
         modality_mapping[attr.get("type", "low_dim")].append(key)
@@ -43,7 +51,7 @@ def create_env(env_meta, shape_meta, enable_render=True, distractors=False, rand
         use_image_obs=enable_render,
         distractors=distractors,
         rand_texture=rand_texture,
-        lighting_mode = lighting_mode,
+        lighting_mode=lighting_mode,
         env_id=env_id,
     )
     return env
@@ -77,7 +85,7 @@ class RobomimicImageRunner(BaseImageRunner):
         n_envs=None,
         distractors=False,
         rand_texture=False,
-        lighting_mode='default',
+        lighting_mode="default",
     ):
         super().__init__(output_dir)
 
@@ -99,6 +107,7 @@ class RobomimicImageRunner(BaseImageRunner):
             rotation_transformer = RotationTransformer("axis_angle", "rotation_6d")
 
         env_xml_files = []
+
         def env_fn():
             rand_id = random.randint(0, 100000)
             robomimic_env = create_env(
@@ -107,7 +116,7 @@ class RobomimicImageRunner(BaseImageRunner):
                 distractors=distractors,
                 rand_texture=rand_texture,
                 lighting_mode=lighting_mode,
-                env_id = rand_id,
+                env_id=rand_id,
             )
             env_xml_files.append(robomimic_env.env.xml)
             # except AttributeError:
@@ -146,7 +155,7 @@ class RobomimicImageRunner(BaseImageRunner):
         # a separate env_fn that does not create OpenGL context (enable_render=False)
         # is needed to initialize spaces.
         def dummy_env_fn():
-            rand_id= random.randint(0, 100000)
+            rand_id = random.randint(0, 100000)
             robomimic_env = create_env(
                 env_meta=env_meta,
                 shape_meta=shape_meta,
@@ -154,7 +163,7 @@ class RobomimicImageRunner(BaseImageRunner):
                 distractors=distractors,
                 rand_texture=rand_texture,
                 lighting_mode=lighting_mode,
-                env_id = rand_id,
+                env_id=rand_id,
             )
             env_xml_files.append(robomimic_env.env.xml)
             return MultiStepWrapper(
@@ -273,7 +282,7 @@ class RobomimicImageRunner(BaseImageRunner):
         n_envs = len(self.env_fns)
         n_inits = len(self.env_init_fn_dills)
         n_chunks = math.ceil(n_inits / n_envs)
-        
+
         print(n_chunks)
 
         # allocate data
@@ -382,8 +391,7 @@ class RobomimicImageRunner(BaseImageRunner):
             name = prefix + "mean_score"
             value = np.mean(value)
             log_data[name] = value
-        
-  
+
         return log_data
 
     def undo_transform_action(self, action):

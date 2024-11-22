@@ -178,29 +178,28 @@ class DiffusionUnetHybridImagePolicySODA(BaseImagePolicy):
         print("Vision params: %e" % sum(p.numel() for p in self.obs_encoder.parameters()))
 
         self.ema_encoder = copy.deepcopy(self.obs_encoder).to(self.device)
-        
+
         for p in self.ema_encoder.parameters():
             p.requires_grad_(False)
 
         if self.normalize_obs:
             soda_config["normalizer"] = self.normalizer
-            
+
         n_rgb_obs = len(obs_config["rgb"])
         rgb_feat_dim = config["observation"]["encoder"]["rgb"]["core_kwargs"]["feature_dimension"]
         proj_dim = n_rgb_obs * rgb_feat_dim
-        
+
         self.projection = nn.Linear(proj_dim, proj_dim)
         self.ema_projection = copy.deepcopy(self.projection)
         for p in self.ema_projection.parameters():
             p.requires_grad_(False)
-        
-        
+
         self.soda = SODA(
-            encoder = self.obs_encoder,
-            ema_encoder = self.ema_encoder,
-            projection = self.projection,
-            ema_projection = self.ema_projection,
-            blend_factor = 0.5,
+            encoder=self.obs_encoder,
+            ema_encoder=self.ema_encoder,
+            projection=self.projection,
+            ema_projection=self.ema_projection,
+            blend_factor=0.5,
             **soda_config,
         )
 

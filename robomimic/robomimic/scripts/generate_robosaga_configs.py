@@ -3,8 +3,6 @@ import json
 import os
 from collections import OrderedDict
 
-# TODO: add randomize jittering as another augmentation strategy
-
 
 def generate_saga_configs(config_dir, task, background_dir, data_dir, exp_dir):
     saga_default_configs = {
@@ -24,13 +22,13 @@ def generate_saga_configs(config_dir, task, background_dir, data_dir, exp_dir):
             "blend_alpha": 0.5,  # blending alpha for blending random overlay
             "saliency_saga_cap": 0.8,  # the cap for saliency values in RoboSaGA
         },
-        "train": {"color_jitter": True},
+        "train": {"color_jitter": False},
     }
 
     # HACK: overload the saliency configs for soda for only the background path
     soda_default_configs = {
         "saliency": {"enabled": True, "background_path": background_dir},
-        "train": {"color_jitter": True},
+        "train": {"color_jitter": False},
     }
 
     overlay_default_configs = {
@@ -48,7 +46,7 @@ def generate_saga_configs(config_dir, task, background_dir, data_dir, exp_dir):
             "blend_alpha": 0.5,  # blending alpha for blending random overlay
             "saliency_saga_cap": 0.8,  # the cap for saliency values in RoboSaGA
         },
-        "train": {"color_jitter": True},
+        "train": {"color_jitter": False},
     }
 
     saga_exp_configs = {

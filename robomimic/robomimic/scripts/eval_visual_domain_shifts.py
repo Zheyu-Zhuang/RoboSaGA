@@ -126,8 +126,6 @@ if __name__ == "__main__":
     py_script = os.path.join(os.path.dirname(os.path.realpath(__file__)), "eval_trained_agent.py")
     scripts_with_args = []
 
-    # TODO: add combinations of visual domain shifts
-
     mode = "_".join(args.vds) if args.vds else "train_domain"
     vds_command = [f"--{vds}" for vds in args.vds]
 

@@ -32,6 +32,7 @@ from diffusion_policy.policy.diffusion_unet_hybrid_image_policy import (
     DiffusionUnetHybridImagePolicy,
 )
 from diffusion_policy.workspace.base_workspace import BaseWorkspace
+from robosaga.saliency_guided_augmentation import RoboSaGA
 
 OmegaConf.register_new_resolver("eval", eval, replace=True)
 
@@ -84,6 +85,17 @@ class TrainDiffusionUnetHybridWorkspace(BaseWorkspace):
         val_dataloader = DataLoader(val_dataset, **cfg.val_dataloader)
 
         self.model.set_normalizer(normalizer)
+
+        robosaga = None
+        if "saliency" in cfg and cfg.saliency.enabled:
+            cfg.saliency.buffer_depth = len(dataset)
+            cfg.saliency.save_dir = os.path.join(self.output_dir, "saliency")
+
+            if self.model.normalize_obs:
+                saga_normalizer = self.model.normalizer
+
+            robosaga = RoboSaGA(self.model.obs_encoder, normalizer=saga_normalizer, **cfg.saliency)
+
         if cfg.training.use_ema:
             self.ema_model.set_normalizer(normalizer)
 
@@ -167,7 +179,9 @@ class TrainDiffusionUnetHybridWorkspace(BaseWorkspace):
                             train_sampling_batch = batch
 
                         # compute loss
-                        raw_loss = self.model.compute_loss(batch)
+                        raw_loss = self.model.compute_loss(
+                            batch, epoch_idx=self.epoch, batch_idx=batch_idx, robosaga=robosaga
+                        )
                         loss = raw_loss / cfg.training.gradient_accumulate_every
                         loss.backward()
 
@@ -224,28 +238,31 @@ class TrainDiffusionUnetHybridWorkspace(BaseWorkspace):
 
                 # run validation
                 if (self.epoch % cfg.training.val_every) == 0:
-                    with torch.no_grad():
-                        val_losses = list()
-                        with tqdm.tqdm(
-                            val_dataloader,
-                            desc=f"Validation epoch {self.epoch}",
-                            leave=False,
-                            mininterval=cfg.training.tqdm_interval_sec,
-                        ) as tepoch:
-                            for batch_idx, batch in enumerate(tepoch):
-                                batch = dict_apply(
-                                    batch, lambda x: x.to(device, non_blocking=True)
-                                )
-                                loss = self.model.compute_loss(batch)
-                                val_losses.append(loss)
-                                if (cfg.training.max_val_steps is not None) and batch_idx >= (
-                                    cfg.training.max_val_steps - 1
-                                ):
-                                    break
-                        if len(val_losses) > 0:
-                            val_loss = torch.mean(torch.tensor(val_losses)).item()
-                            # log epoch average validation loss
-                            step_log["val_loss"] = val_loss
+                    # with torch.no_grad(): # grad is required for saliency
+                    val_losses = list()
+                    with tqdm.tqdm(
+                        val_dataloader,
+                        desc=f"Validation epoch {self.epoch}",
+                        leave=False,
+                        mininterval=cfg.training.tqdm_interval_sec,
+                    ) as tepoch:
+                        for batch_idx, batch in enumerate(tepoch):
+                            batch = dict_apply(batch, lambda x: x.to(device, non_blocking=True))
+                            loss = self.model.compute_loss(
+                                batch,
+                                epoch_idx=self.epoch,
+                                batch_idx=batch_idx,
+                                robosaga=robosaga,
+                            )
+                            val_losses.append(loss)
+                            if (cfg.training.max_val_steps is not None) and batch_idx >= (
+                                cfg.training.max_val_steps - 1
+                            ):
+                                break
+                    if len(val_losses) > 0:
+                        val_loss = torch.mean(torch.tensor(val_losses)).item()
+                        # log epoch average validation loss
+                        step_log["val_loss"] = val_loss
 
                 # run diffusion sampling on a training batch
                 if (self.epoch % cfg.training.sample_every) == 0:

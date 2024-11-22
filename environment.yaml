@@ -44,7 +44,6 @@ dependencies:
   - boto3=1.24.96
   - accelerate=0.13.2
   - datasets=2.6.1
-  - diffusers=0.11.1
   - av=10.0.0
   - cmake=3.24.3
   - glew
@@ -57,7 +56,10 @@ dependencies:
   - pip:
     - albumentations
     - kornia
+    - ruamel.yaml
     - ray[default,tune]==2.2.0
+    - diffusers==0.11.1
+    - huggingface-hub==0.23.2
     # requires mujoco py dependencies libosmesa6-dev libgl1-mesa-glx libglfw3 patchelf
     - pygame==2.1.2
     - pybullet-svl==3.1.6.4

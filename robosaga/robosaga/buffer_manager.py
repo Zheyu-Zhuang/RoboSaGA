@@ -22,13 +22,16 @@ class BufferManager:
         Args:
             **kwargs: Arbitrary keyword arguments.
         """
-        self.depth = kwargs.get("buffer_depth", None)
-        self.shape = kwargs.get("buffer_shape", None)
+        self.buffer_depth = kwargs.get("buffer_depth", None)
+        self.buffer_shape = kwargs.get("buffer_shape", None)
         self.output_shape = kwargs.get("output_shape", None)
-        assert self.depth is not None, "Buffer depth must be provided"
-        self.update_counter = torch.zeros(self.depth, device=device)
-        H, W = self.shape
-        self.buffer = torch.ones(self.depth, 1, H, W, device=device).mul_(255).to(torch.uint8)
+        assert self.buffer_depth is not None, "Buffer depth must be provided"
+        self.check_required_args(print_args=True)
+        self.update_counter = torch.zeros(self.buffer_depth, device=device)
+        H, W = self.buffer_shape
+        self.buffer = (
+            torch.ones(self.buffer_depth, 1, H, W, device=device).mul_(255).to(torch.uint8)
+        )
 
     def set(self, smaps, buffer_ids, crop_inds=None):
         """
@@ -44,9 +47,7 @@ class BufferManager:
             AssertionError: If saliency maps and buffer IDs size mismatch or saliency maps are not in [0, 1] range.
         """
         assert smaps.shape[0] == buffer_ids.shape[0], "Saliency and IDs size mismatch"
-        assert (
-            smaps.min() >= 0 and smaps.max() <= 1
-        ), "Saliency maps not in [0, 1] range"
+        assert smaps.min() >= 0 and smaps.max() <= 1, "Saliency maps not in [0, 1] range"
 
         # Remove duplicates to avoid repetitive saliency update
         unique_ids = self._first_occurrence_indices(buffer_ids)
@@ -55,10 +56,14 @@ class BufferManager:
 
         smaps = smaps[unique_ids]
         smaps = (smaps * 255).to(torch.uint8)
-        
+
         if crop_inds is not None:
             padded_smaps = torch.zeros(
-                buffer_ids.shape[0], 1, self.shape[0], self.shape[1], device=smaps.device
+                buffer_ids.shape[0],
+                1,
+                self.buffer_shape[0],
+                self.buffer_shape[1],
+                device=smaps.device,
             )
             for i in range(buffer_ids.shape[0]):
                 h_0, w_0 = crop_inds[i, 0, 0], crop_inds[i, 0, 1]
@@ -86,9 +91,7 @@ class BufferManager:
             torch.Tensor: The retrieved saliency maps.
         """
         if crop_inds is not None:
-            assert (
-                crop_inds.shape[0] == buffer_ids.shape[0]
-            ), "Crop indices and IDs size mismatch"
+            assert crop_inds.shape[0] == buffer_ids.shape[0], "Crop indices and IDs size mismatch"
 
         # Retrieve saliency map from buffer and convert to [0, 1] range
         smaps = self.buffer[buffer_ids] / 255.0
@@ -97,9 +100,7 @@ class BufferManager:
             if self.output_shape is None:
                 return smaps
             h_out, w_out = self.output_shape
-            smaps = ObsUtils.crop_image_from_indices(
-                smaps, crop_inds, h_out, w_out
-            ).squeeze(1)
+            smaps = ObsUtils.crop_image_from_indices(smaps, crop_inds, h_out, w_out).squeeze(1)
         else:
             t_h, t_w = self.output_shape
             smaps = ObsUtils.center_crop(smaps, t_h, t_w).squeeze(1)
@@ -122,3 +123,22 @@ class BufferManager:
             if id_ not in id_dict:
                 id_dict[id_] = i
         return torch.tensor([id_dict[id_] for id_ in buffer_ids])
+
+    def check_required_args(self, print_args=False):
+        required_args = [
+            "buffer_depth",
+            "buffer_shape",
+            "output_shape",
+        ]
+
+        for arg in required_args:
+            if arg not in self.__dict__:
+                raise ValueError(f"Argument {arg} is required for BufferManager")
+        if print_args:
+            print("\n============== Saliency Buffer Manager Configuration ===============")
+            for arg in required_args:
+                if isinstance(self.__dict__[arg], torch.Tensor):
+                    print(f"{arg} shape: {list(self.__dict__[arg].shape)}")
+                else:
+                    print(f"{arg}: {self.__dict__[arg]}")
+            print("=====================================================================\n")

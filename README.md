@@ -10,7 +10,6 @@ This is the official implementation of RoboSaGA, a data augmentation technique d
 📈 **The following updates have been made to RoboSaGA and the baselines compared to what was described in the paper:**
 
 ### 🔧 Tweaks
-- **Colour Jittering**: Enabled by default.
 - **Pre-trained ResNet Weights**: Loaded for faster convergence and better saliency.
 - **Average Pooling**: Replaces Spatial Softmax for better saliency. Spatial Softmax introduces a diamond-shaped gradient prior, as its gradient computation depends on the constant multipliers introduced by coordinate grids.
 

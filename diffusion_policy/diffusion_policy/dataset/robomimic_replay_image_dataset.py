@@ -1,22 +1,19 @@
 import concurrent.futures
 import copy
-import hashlib
-import json
 import multiprocessing
 import os
+import random
 import shutil
 from typing import Dict, List
 
+import albumentations as A
 import h5py
 import numpy as np
 import torch
 import zarr
 from filelock import FileLock
-from omegaconf import OmegaConf
 from threadpoolctl import threadpool_limits
 from tqdm import tqdm
-from torchvision import transforms
-from PIL import Image
 
 from diffusion_policy.codecs.imagecodecs_numcodecs import Jpeg2k, register_codecs
 from diffusion_policy.common.normalize_util import (
@@ -55,6 +52,7 @@ class RobomimicReplayImageDataset(BaseImageDataset):
         use_cache=False,
         seed=42,
         val_ratio=0.0,
+        color_jitter=False,
     ):
         rotation_transformer = RotationTransformer(from_rep="axis_angle", to_rep=rotation_rep)
 
@@ -142,24 +140,24 @@ class RobomimicReplayImageDataset(BaseImageDataset):
         self.pad_before = pad_before
         self.pad_after = pad_after
         self.use_legacy_normalizer = use_legacy_normalizer
-        self.color_jittering = transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.2)
+        self.color_jitter_func = A.Compose(
+            [
+                A.RGBShift(r_shift_limit=30, g_shift_limit=30, b_shift_limit=30),
+                A.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.2),
+            ]
+        )
+        self.enable_color_jitter = color_jitter
 
-    def apply_color_jittering(self, input_array, change_prob=0.5):
-        assert np.amax(input_array) > 1.0
-        if np.random.rand() < change_prob:
-            return input_array
-                
-        # Convert the numpy array to a PIL Image
-        pil_image = Image.fromarray(input_array)
-        
+    def color_jitter(self, input_array):
+        # Scale the numpy array values to [0, 255] and convert to uint8
+        input_array = (input_array * 255).astype(np.uint8)
+        input_array = np.transpose(input_array, (1, 2, 0))
         # Apply the color jittering transform
-        jittered_image = self.color_jittering(pil_image)
-        
-        # Convert the PIL Image back to a numpy array
-        output_array = np.array(jittered_image)
-        
-        return output_array
-    
+        jittered_image = self.color_jitter_func(image=input_array)["image"]
+        # Scale the numpy array values back to [0, 1]
+        jittered_image = jittered_image.astype(np.float32) / 255.0
+        return np.transpose(jittered_image, (2, 0, 1))
+
     def get_validation_dataset(self):
         val_set = copy.copy(self)
         val_set.sampler = SequenceSampler(
@@ -229,12 +227,12 @@ class RobomimicReplayImageDataset(BaseImageDataset):
 
         obs_dict = dict()
         for key in self.rgb_keys:
-            # move channel last to channel first
-            # T,H,W,C
-            # WARNING: Hardcoded Color Jittering
             im_THWC = data[key][T_slice]
-            for i in range(im_THWC.shape[0]):
-                im_THWC[i] = self.apply_color_jittering(im_THWC[i]) 
+            if self.enable_color_jitter and random.random() > 0.5:
+                # move channel last to channel first
+                # T,H,W,C
+                for i in range(im_THWC.shape[0]):
+                    im_THWC[i] = self.apply_color_jittering(im_THWC[i])
             # convert uint8 image to float32
             # T,C,H,W
             obs_dict[key] = np.moveaxis(im_THWC, -1, 1).astype(np.float32) / 255.0

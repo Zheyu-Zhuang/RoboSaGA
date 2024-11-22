@@ -520,7 +520,7 @@ class SequenceDataset(torch.utils.data.Dataset):
         )
 
         # HACK SaGA: hardcoded color jittering
-        if self.enable_color_jitter:
+        if self.enable_color_jitter and random.random() > 0.5:
             for k in meta["obs"]:
                 im_type = k.split("_")[-1]
                 if im_type != "image":

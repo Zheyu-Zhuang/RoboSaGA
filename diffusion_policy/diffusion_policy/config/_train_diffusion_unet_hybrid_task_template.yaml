@@ -1,15 +1,14 @@
 defaults:
   - _self_
-  - task: blue_block_pnp_real
+  - task: 
 
 name: train_diffusion_unet_hybrid
-exp_name: "overlay"
+exp_name: 
 
-_target_: diffusion_policy.workspace.train_saga_diffusion_unet_hybrid_workspace.TrainDiffusionUnetHybridWorkspace
+_target_: diffusion_policy.workspace.train_diffusion_unet_hybrid_workspace.TrainDiffusionUnetHybridWorkspace
 
 task_name: ${task.name}
 shape_meta: ${task.shape_meta}
-# exp_name: "default"
 
 horizon: 16
 n_obs_steps: 2
@@ -19,44 +18,56 @@ dataset_obs_steps: ${n_obs_steps}
 past_action_visible: False
 keypoint_visible_rate: 1.0
 obs_as_global_cond: True
+color_jitter: False
 
 # -------------------------- pay attention here !!! ------------------------- #
 use_ema: True
 normalize_obs: True
 group_norm:
   enable: True
-  return_fullgrad_bias: True
-
+  return_fullgrad_bias: False
+robomimic_visual_encoder:
+  pretrained: True
+  pool_class: SpatialMeanPool # replaced "SpatialSoftmax"
 
 saliency:
-  aug_ratio: 0.5  # 50% of the time, use augmented data
-  aug_strategy: simple_overlay
+  enabled: False
+  aug_strategy: robosaga
+  warmup_epochs: 10
+  saliency_saga_cap: 0.8
+  saliency_erase_threshold: 0.5
+  blend_alpha: 0.5
+  update_ratio: 0.1  # update 10% of the buffer per training batch
+  aug_ratio: 0.5  # augment 50% of the trajectories in the batch
+  buffer_shape: [84, 84]
+  output_shape: [76, 76]
+  buffer_depth: null
   debug_vis: False
   debug_save: True
-  buffer_shape: [84, 84]
   save_dir: ""
-  save_debug_im_every_n_batches: 5
-  background_path: ../data/coco_5k_84x84/
-  warmup_epochs: 10
+  save_debug_im_every_n_batches: 50
+  background_path: ../data/backgrounds/
+
+soda: 
+  background_path: ../data/backgrounds/
+
 # ---------------------------------------------------------------------------- #
 
 policy:
-  _target_: diffusion_policy.policy.diffusion_unet_hybrid_image_policy_saga.DiffusionUnetHybridImagePolicySaGA
+  _target_: diffusion_policy.policy.diffusion_unet_hybrid_image_policy.DiffusionUnetHybridImagePolicy
 
   shape_meta: ${shape_meta}
   
   noise_scheduler:
-    _target_: diffusers.schedulers.scheduling_ddim.DDIMScheduler
+    _target_: diffusers.schedulers.scheduling_ddpm.DDPMScheduler
     num_train_timesteps: 100
     beta_start: 0.0001
     beta_end: 0.02
-    # beta_schedule is important
-    # this is the best we found
     beta_schedule: squaredcos_cap_v2
-    clip_sample: True
-    set_alpha_to_one: True
-    steps_offset: 0
+    variance_type: fixed_small # Yilun's paper uses fixed_small_log instead, but easy to cause Nan
+    clip_sample: True # required when predict_epsilon=False
     prediction_type: epsilon # or sample
+
   horizon: ${horizon}
   n_action_steps: ${eval:'${n_action_steps}+${n_latency_steps}'}
   n_obs_steps: ${n_obs_steps}
@@ -72,10 +83,6 @@ policy:
   normalize_obs: ${normalize_obs}
   eval_fixed_crop: True
   group_norm: ${group_norm}
-  saliency_config: ${saliency}
-
-  # scheduler.step params
-  # predict_epsilon: True
 
 ema:
   _target_: diffusion_policy.model.diffusion.ema_model.EMAModel
@@ -144,22 +151,22 @@ logging:
 
 checkpoint:
   topk:
-    monitor_key: train_loss
-    mode: min
+    monitor_key: test_mean_score
+    mode: max
     k: 5
-    format_str: 'epoch={epoch:04d}-train_loss={train_loss:.3f}.ckpt'
+    format_str: 'epoch={epoch:04d}-test_mean_score={test_mean_score:.3f}.ckpt'
   save_last_ckpt: True
   save_last_snapshot: False
 
 multi_run:
-  run_dir: ../experiments/robosaga/${task_name}/diffusion_policy/${exp_name}
+  run_dir: ../experiments/${task_name}/diffusion_policy/${exp_name}
   wandb_name_base: ${now:%Y.%m.%d-%H.%M.%S}_${name}_${task_name}
 
 hydra:
   job:
     override_dirname: ${name}
   run:
-    dir: ../experiments/robosaga/${task_name}/diffusion_policy/${exp_name}
+    dir: ../experiments/${task_name}/diffusion_policy/${exp_name}
   sweep:
-    dir: ../experiments/robosaga/${task_name}/diffusion_policy/${exp_name}
+    dir: ../experiments/${task_name}/diffusion_policy/${exp_name}
     subdir: ${hydra.job.num}
