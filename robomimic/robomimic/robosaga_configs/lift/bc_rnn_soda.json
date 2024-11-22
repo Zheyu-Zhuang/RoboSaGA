@@ -60,7 +60,7 @@
         "batch_size": 16,
         "num_epochs": 200,
         "seed": 1,
-        "color_jitter": true
+        "color_jitter": false
     },
     "algo": {
         "optim_params": {

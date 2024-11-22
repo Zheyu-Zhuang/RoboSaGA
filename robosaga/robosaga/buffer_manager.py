@@ -135,10 +135,10 @@ class BufferManager:
             if arg not in self.__dict__:
                 raise ValueError(f"Argument {arg} is required for BufferManager")
         if print_args:
-            print("\n============== Saliency Buffer Manager Configuration ===============")
+            print(" BufferManager Arguments:")
             for arg in required_args:
                 if isinstance(self.__dict__[arg], torch.Tensor):
-                    print(f"{arg} shape: {list(self.__dict__[arg].shape)}")
+                    print(f"    {arg} shape: {list(self.__dict__[arg].shape)}")
                 else:
-                    print(f"{arg}: {self.__dict__[arg]}")
-            print("=====================================================================\n")
+                    print(f"    {arg}: {self.__dict__[arg]}")
+            print("\n")
