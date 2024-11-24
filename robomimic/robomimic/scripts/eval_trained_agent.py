@@ -205,7 +205,13 @@ def replace_texture(xml_file, wall_textures, table_textures, floor_textures):
     root = tree.getroot()
     table_env_target_texture = ["tex-ceramic", "tex-cream-plaster", "texplane"]
     multi_table_target_texture = ["tex-ceramic", "tex-cream-plaster", "texplane"]
-    bin_env_target_texture = ["tex-light-wood", "tex-dark-wood", "texplane", "tex-ceramic", "tex-cream-plaster"]
+    bin_env_target_texture = [
+        "tex-light-wood",
+        "tex-dark-wood",
+        "texplane",
+        "tex-ceramic",
+        "tex-cream-plaster",
+    ]
     texture_types = {
         "tex-ceramic": table_textures,
         "tex-cream-plaster": wall_textures,
@@ -250,10 +256,11 @@ def get_all_texture_paths(rand_texture):
         texture_paths.append(texture_path)
     return texture_paths
 
+
 def randomize_lighting(mode=None, xml_file=None):
     if mode is None or xml_file is None:
         return
-    assert mode in ['lighting', 'lighting_and_shadow', None]
+    assert mode in ["lighting", "lighting_and_shadow", None]
     assert xml_file is not None
     tree = ET.parse(xml_file)
     root = tree.getroot()
@@ -262,11 +269,12 @@ def randomize_lighting(mode=None, xml_file=None):
         low, high = intensity_range
         r, g, b = random.uniform(low, high), random.uniform(low, high), random.uniform(low, high)
         light.attrib["diffuse"] = f"{r} {g} {b}"
-        if 'shadow' in mode.split('_'):
+        if "shadow" in mode.split("_"):
             light.attrib["castshadow"] = "true"
             light.attrib["diffuse"] = f"{r} {g} {b}"
     tree.write(xml_file)
-    
+
+
 floor_textures = get_all_texture_paths("floor")
 wall_textures = get_all_texture_paths("wall")
 table_textures = get_all_texture_paths("table")
@@ -315,7 +323,7 @@ def run_trained_agent(args):
     # create environment from saved checkpoint
     if args.distractors:
         args.env_id = None
-        
+
     env, _ = FileUtils.env_from_checkpoint(
         ckpt_dict=ckpt_dict,
         env_name=args.env,
@@ -324,6 +332,7 @@ def run_trained_agent(args):
         verbose=False,
         distractors=args.distractors,
         env_id=args.env_id,
+        rand_texture=args.backgrounds,
     )
 
     # maybe set seed
@@ -351,10 +360,10 @@ def run_trained_agent(args):
     for i in range(pbar.total):
         if args.backgrounds:
             replace_texture(xml_path, wall_textures, table_textures, floor_textures)
-        if args.lighting: 
-            randomize_lighting(mode='lighting', xml_file=xml_path)
+        if args.lighting:
+            randomize_lighting(mode="lighting", xml_file=xml_path)
         if args.lighting_and_shadow:
-            randomize_lighting(mode='lighting_and_shadow', xml_file=xml_path)
+            randomize_lighting(mode="lighting_and_shadow", xml_file=xml_path)
         stats, traj = rollout(
             policy=policy,
             env=env,
@@ -400,8 +409,8 @@ def run_trained_agent(args):
     avg_rollout_stats["Num_Success"] = np.sum(rollout_stats["Success_Rate"])
     print(f"Average Rollout Stats for {ckpt_path}:")
     print(json.dumps(avg_rollout_stats, indent=4))
-    
-    if 'temp' in xml_path:
+
+    if "temp" in xml_path:
         print(f"Removing temporary xml file {xml_path}")
         os.remove(xml_path)
 
@@ -432,13 +441,13 @@ if __name__ == "__main__":
         action="store_true",
         help="use distractors in the environment",
     )
-    
+
     parser.add_argument(
-        "--lighting",  
+        "--lighting",
         action="store_true",
         help="randomize lighting in the environment",
     )
-    
+
     parser.add_argument(
         "--lighting_and_shadow",
         action="store_true",

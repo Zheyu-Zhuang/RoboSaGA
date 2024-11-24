@@ -375,12 +375,13 @@ class TwoArmTransport(TwoArmEnv):
             head_density_ratio=1.5,
         )
         trash = BoxObject(name="trash", size=[0.02, 0.02, 0.02], material=redwood)
+
         self.transport = TransportGroup(
             name="transport",
             payload=payload,
             trash=trash,
             bin_size=self.bin_size,
-            rand_eval=self.env_id is not None or self.rand_texture is not None,
+            transparent_bin=self.rand_texture,
         )
 
         # Create placement initializer

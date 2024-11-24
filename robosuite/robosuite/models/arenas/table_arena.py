@@ -9,7 +9,7 @@ from robosuite.utils.mjcf_utils import (
     string_to_array,
     xml_path_completion,
 )
-from robosuite.utils.saga_utils import replace_texture, rand_lighting
+from robosuite.utils.saga_utils import rand_lighting, replace_texture
 
 
 class TableArena(Arena):
@@ -33,12 +33,12 @@ class TableArena(Arena):
         table_offset=(0, 0, 0.8),
         has_legs=True,
         rand_texture=False,
-        lighting_mode='default',
+        lighting_mode="default",
         xml="arenas/table_arena.xml",
         env_id=None,
     ):
-        assert lighting_mode in ['default', 'random', 'shadow']
-        
+        assert lighting_mode in ["default", "random", "shadow"]
+
         default_xml = xml_path_completion(xml)
         if env_id is not None:
             xml_temp = default_xml.replace(".xml", f"_{env_id}_temp.xml")
@@ -47,16 +47,16 @@ class TableArena(Arena):
             xml = xml_temp
         else:
             xml = default_xml
-            
-        if lighting_mode == 'random':
+
+        if lighting_mode == "random":
             rand_lighting(xml)
-        elif lighting_mode == 'shadow':
+        elif lighting_mode == "shadow":
             rand_lighting(xml, castshadow=True)
-                    
+
         if rand_texture is True:
             replace_texture(xml_temp)
             xml = xml_temp
-            
+
         super().__init__(xml)
 
         self.xml = xml

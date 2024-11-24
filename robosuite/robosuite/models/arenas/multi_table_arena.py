@@ -16,7 +16,7 @@ from robosuite.utils.mjcf_utils import (
     string_to_array,
     xml_path_completion,
 )
-from robosuite.utils.saga_utils import replace_texture, rand_lighting
+from robosuite.utils.saga_utils import rand_lighting, replace_texture
 
 
 class MultiTableArena(Arena):
@@ -59,11 +59,11 @@ class MultiTableArena(Arena):
         else:
             xml = default_xml
 
-        if lighting_mode == 'random':
+        if lighting_mode == "random":
             rand_lighting(xml)
-        elif lighting_mode == 'shadow':
+        elif lighting_mode == "shadow":
             rand_lighting(xml, castshadow=True)
-            
+
         if rand_texture is True:
             replace_texture(xml_temp)
             xml = xml_temp

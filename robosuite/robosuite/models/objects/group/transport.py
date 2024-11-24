@@ -1,7 +1,8 @@
-from robosuite.models.objects import ObjectGroup, Bin, Lid
-import robosuite.utils.transform_utils as T
-import robosuite.utils.sim_utils as SU
 import numpy as np
+
+import robosuite.utils.sim_utils as SU
+import robosuite.utils.transform_utils as T
+from robosuite.models.objects import Bin, Lid, ObjectGroup
 
 
 class TransportGroup(ObjectGroup):
@@ -16,21 +17,46 @@ class TransportGroup(ObjectGroup):
         bin_size (3-tuple): (x,y,z) full size of bins to place on tables
     """
 
-    def __init__(self, name, payload, trash, bin_size=(0.3, 0.3, 0.15), rand_eval=False):
+    def __init__(
+        self,
+        name,
+        payload,
+        trash,
+        bin_size=(0.3, 0.3, 0.15),
+        transparent_bin=False,
+    ):
         # Store and initialize internal variables
         self.payload = payload
         self.trash = trash
         self.bin_size = bin_size
 
         # Create bins and lid
-        if rand_eval:
-            self.start_bin = Bin(name=f"{name}_start_bin", bin_size=bin_size, density=10000., rgba=(0.1, 0.1, 0.1, 0.0), use_texture=False)
-            self.target_bin = Bin(name=f"{name}_target_bin", bin_size=bin_size, density=10000., rgba=(0.1, 0.1, 0.1, 0.0), use_texture=False)
-            self.trash_bin = Bin(name=f"{name}_trash_bin", bin_size=bin_size, density=10000., rgba=(0.1, 0.1, 0.1, 0.0), use_texture=False) 
+        if transparent_bin:
+            self.start_bin = Bin(
+                name=f"{name}_start_bin",
+                bin_size=bin_size,
+                density=10000.0,
+                rgba=(0.1, 0.1, 0.1, 0.0),
+                use_texture=False,
+            )
+            self.target_bin = Bin(
+                name=f"{name}_target_bin",
+                bin_size=bin_size,
+                density=10000.0,
+                rgba=(0.1, 0.1, 0.1, 0.0),
+                use_texture=False,
+            )
+            self.trash_bin = Bin(
+                name=f"{name}_trash_bin",
+                bin_size=bin_size,
+                density=10000.0,
+                rgba=(0.1, 0.1, 0.1, 0.0),
+                use_texture=False,
+            )
         else:
-            self.start_bin = Bin(name=f"{name}_start_bin", bin_size=bin_size, density=10000.)
-            self.target_bin = Bin(name=f"{name}_target_bin", bin_size=bin_size, density=10000.)
-            self.trash_bin = Bin(name=f"{name}_trash_bin", bin_size=bin_size, density=10000.)
+            self.start_bin = Bin(name=f"{name}_start_bin", bin_size=bin_size, density=10000.0)
+            self.target_bin = Bin(name=f"{name}_target_bin", bin_size=bin_size, density=10000.0)
+            self.trash_bin = Bin(name=f"{name}_trash_bin", bin_size=bin_size, density=10000.0)
         self.lid = Lid(name=f"{name}_start_bin_lid", lid_size=(*bin_size[:2], 0.01))
 
         # Relevant geom ids
@@ -91,11 +117,21 @@ class TransportGroup(ObjectGroup):
         super().update_sim(sim=sim)
 
         # Update internal references to IDs
-        self.payload_geom_ids = [self.sim.model.geom_name2id(geom) for geom in self.payload.contact_geoms]
-        self.trash_geom_ids = [self.sim.model.geom_name2id(geom) for geom in self.trash.contact_geoms]
-        self.target_bin_base_geom_ids = [self.sim.model.geom_name2id(geom) for geom in self.target_bin.base_geoms]
-        self.trash_bin_base_geom_ids = [self.sim.model.geom_name2id(geom) for geom in self.trash_bin.base_geoms]
-        self.lid_handle_geom_ids = [self.sim.model.geom_name2id(geom) for geom in self.lid.handle_geoms]
+        self.payload_geom_ids = [
+            self.sim.model.geom_name2id(geom) for geom in self.payload.contact_geoms
+        ]
+        self.trash_geom_ids = [
+            self.sim.model.geom_name2id(geom) for geom in self.trash.contact_geoms
+        ]
+        self.target_bin_base_geom_ids = [
+            self.sim.model.geom_name2id(geom) for geom in self.target_bin.base_geoms
+        ]
+        self.trash_bin_base_geom_ids = [
+            self.sim.model.geom_name2id(geom) for geom in self.trash_bin.base_geoms
+        ]
+        self.lid_handle_geom_ids = [
+            self.sim.model.geom_name2id(geom) for geom in self.lid.handle_geoms
+        ]
         self.payload_body_id = self.sim.model.body_name2id(self.payload.root_body)
         self.trash_body_id = self.sim.model.body_name2id(self.trash.root_body)
 
@@ -113,7 +149,9 @@ class TransportGroup(ObjectGroup):
         Returns:
             np.array: (x,y,z,w) quaternion of the lid handle
         """
-        return np.array(T.mat2quat(self.sim.data.geom_xmat[self.lid_handle_geom_ids[0]].reshape(3, 3)))
+        return np.array(
+            T.mat2quat(self.sim.data.geom_xmat[self.lid_handle_geom_ids[0]].reshape(3, 3))
+        )
 
     @property
     def payload_pos(self):
