@@ -296,21 +296,20 @@ class DiffusionUnetHybridImagePolicy(BaseImagePolicy):
         global_cond = None
         trajectory = nactions
         cond_data = trajectory
+
+        # apply robosaga
+        nobs = robosaga(nobs, global_ids, epoch_idx, batch_idx) if robosaga is not None else nobs
         if self.obs_as_global_cond:
             # reshape B, T, ... to B*T
             this_nobs = dict_apply(
                 nobs, lambda x: x[:, : self.n_obs_steps, ...].reshape(-1, *x.shape[2:])
             )
-            if robosaga is not None:
-                this_nobs = robosaga(this_nobs, global_ids, epoch_idx, batch_idx)
             nobs_features = self.obs_encoder(this_nobs)
             # reshape back to B, Do
             global_cond = nobs_features.reshape(batch_size, -1)
         else:
             # reshape B, T, ... to B*T
             this_nobs = dict_apply(nobs, lambda x: x.reshape(-1, *x.shape[2:]))
-            if robosaga is not None:
-                this_nobs = robosaga(this_nobs, global_ids, epoch_idx, batch_idx)
             nobs_features = self.obs_encoder(this_nobs)
             # reshape back to B, T, Do
             nobs_features = nobs_features.reshape(batch_size, horizon, -1)
