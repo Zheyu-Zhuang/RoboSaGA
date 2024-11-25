@@ -28,7 +28,7 @@ class RoboSaGA:
         self.saliency_saga_cap = kwargs.get("saliency_saga_cap", 0.8)
 
         # Augmentation related attributes
-        self.aug_strategy = kwargs.get("aug_strategy", "robosaga")        
+        self.aug_strategy = kwargs.get("aug_strategy", "robosaga")
         self.aug_ratio = kwargs.get("aug_ratio", 0)
         self.target_aug_ratio = kwargs.get("aug_ratio", 0)
         self.update_ratio = kwargs.get("update_ratio", 0)
@@ -38,9 +38,10 @@ class RoboSaGA:
 
         if self.aug_strategy == "robosaga":
             assert self.update_ratio > 0, "update_ratio should be greater than 0"
-        self.check_augmentation_strategy()
 
         self.disable_buffer = kwargs.get("disable_buffer", False)
+
+        self.check_augmentation_strategy()
 
         # Other attributes
         self.save_debug_im_every_n_batches = kwargs.get("save_debug_im_every_n_batches", 50)
@@ -362,4 +363,4 @@ class RoboSaGA:
                     print(f"{arg} shape: {list(self.__dict__[arg].shape)}")
                 else:
                     print(f"{arg}: {self.__dict__[arg]}")
-                print("\n")
+            print("\n")

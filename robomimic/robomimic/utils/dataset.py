@@ -8,10 +8,10 @@ import random
 from contextlib import contextmanager
 from copy import deepcopy
 
-import albumentations as A
 import h5py
 import numpy as np
 import torch.utils.data
+from torchvision import transforms as T
 
 import robomimic.utils.log_utils as LogUtils
 import robomimic.utils.obs_utils as ObsUtils
@@ -160,11 +160,8 @@ class SequenceDataset(torch.utils.data.Dataset):
         self.close_and_delete_hdf5_handle()
         self.enable_color_jitter = color_jitter
 
-        self.color_jitter_func = A.Compose(
-            [
-                A.RGBShift(r_shift_limit=30, g_shift_limit=30, b_shift_limit=30),
-                A.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.2),
-            ]
+        self.color_jitter_func = T.ColorJitter(
+            contrast=0.2, saturation=0.2, hue=0.2, brightness=0.2
         )
 
     def color_jitter(self, input_array):

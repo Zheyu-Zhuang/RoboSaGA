@@ -381,7 +381,7 @@ class TwoArmTransport(TwoArmEnv):
             payload=payload,
             trash=trash,
             bin_size=self.bin_size,
-            transparent_bin=self.rand_texture,
+            # transparent_bin=self.rand_texture,
         )
 
         # Create placement initializer
