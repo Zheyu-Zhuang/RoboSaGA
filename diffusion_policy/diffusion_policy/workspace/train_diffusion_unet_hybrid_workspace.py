@@ -122,7 +122,6 @@ class TrainDiffusionUnetHybridWorkspace(BaseWorkspace):
         assert isinstance(env_runner, BaseImageRunner)
 
         # configure logging
-        print(cfg.logging.keys())
         wandb_run = wandb.init(
             dir=str(self.output_dir),
             config=OmegaConf.to_container(cfg, resolve=True),
