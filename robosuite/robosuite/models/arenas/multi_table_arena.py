@@ -59,9 +59,9 @@ class MultiTableArena(Arena):
         else:
             xml = default_xml
 
-        if lighting_mode == "random":
+        if lighting_mode == "lighting":
             rand_lighting(xml)
-        elif lighting_mode == "shadow":
+        elif lighting_mode == "lighting_and_shadow":
             rand_lighting(xml, castshadow=True)
 
         if rand_texture is True:

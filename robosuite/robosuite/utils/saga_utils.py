@@ -40,7 +40,10 @@ def distractors_to_model(distractors, postfix=""):
     return models
 
 
-def rand_lighting(xml_file, castshadow=False):
+def randomize_lighting(mode=None, xml_file=None):
+    if mode is None or xml_file is None:
+        return
+    assert mode in ["lighting", "lighting_and_shadow", None]
     assert xml_file is not None
     tree = ET.parse(xml_file)
     root = tree.getroot()
@@ -49,23 +52,25 @@ def rand_lighting(xml_file, castshadow=False):
         low, high = intensity_range
         r, g, b = random.uniform(low, high), random.uniform(low, high), random.uniform(low, high)
         light.attrib["diffuse"] = f"{r} {g} {b}"
-        if castshadow:
+        if "shadow" in mode.split("_"):
             light.attrib["castshadow"] = "true"
-        else:
-            light.attrib["castshadow"] = "false"
+            light.attrib["diffuse"] = f"{r} {g} {b}"
     tree.write(xml_file)
-    
 
-def replace_texture(xml_file):
+
+def replace_texture(xml_file, wall_textures, table_textures, floor_textures):
     # Load the XML file
     tree = ET.parse(xml_file)
     root = tree.getroot()
-    table_textures = get_all_texture_paths("table")
-    floor_textures = get_all_texture_paths("floor")
-    wall_textures = get_all_texture_paths("wall")
     table_env_target_texture = ["tex-ceramic", "tex-cream-plaster", "texplane"]
     multi_table_target_texture = ["tex-ceramic", "tex-cream-plaster", "texplane"]
-    bin_env_target_texture = ["tex-light-wood", "tex-dark-wood", "texplane", "tex-ceramic"]
+    bin_env_target_texture = [
+        "tex-light-wood",
+        "tex-dark-wood",
+        "texplane",
+        "tex-ceramic",
+        "tex-cream-plaster",
+    ]
     texture_types = {
         "tex-ceramic": table_textures,
         "tex-cream-plaster": wall_textures,

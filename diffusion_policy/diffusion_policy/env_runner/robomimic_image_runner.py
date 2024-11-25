@@ -70,7 +70,7 @@ class RobomimicImageRunner(BaseImageRunner):
         n_train=10,
         n_train_vis=3,
         train_start_idx=0,
-        n_test=22,
+        n_test=50,
         n_test_vis=6,
         test_start_seed=10000,
         max_steps=400,
