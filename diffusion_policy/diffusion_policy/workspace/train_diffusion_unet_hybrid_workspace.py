@@ -88,7 +88,7 @@ class TrainDiffusionUnetHybridWorkspace(BaseWorkspace):
 
         robosaga = None
         if "saliency" in cfg and cfg.saliency.enabled:
-            cfg.saliency.buffer_depth = len(dataset)
+            cfg.saliency.buffer_depth = len(dataset) + 1
             cfg.saliency.save_dir = os.path.join(self.output_dir, "saliency")
 
             if self.model.normalize_obs:
@@ -122,7 +122,6 @@ class TrainDiffusionUnetHybridWorkspace(BaseWorkspace):
         assert isinstance(env_runner, BaseImageRunner)
 
         # configure logging
-        print(cfg.logging.keys())
         wandb_run = wandb.init(
             dir=str(self.output_dir),
             config=OmegaConf.to_container(cfg, resolve=True),

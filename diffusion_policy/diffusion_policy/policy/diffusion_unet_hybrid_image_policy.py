@@ -45,7 +45,6 @@ class DiffusionUnetHybridImagePolicy(BaseImagePolicy):
         **kwargs,
     ):
         super().__init__()
-
         # parse shape_meta
         action_shape = shape_meta["action"]["shape"]
         assert len(action_shape) == 1
@@ -91,15 +90,12 @@ class DiffusionUnetHybridImagePolicy(BaseImagePolicy):
                 config.observation.encoder.rgb.core_kwargs.backbone_kwargs.pretrained = (
                     robomimic_visual_encoder["pretrained"]
                 )
-                print("=========== Robomimic Visual Encoder ===========")
-                print(f"pool_class: {robomimic_visual_encoder['pool_class']}")
-                print(f"pretrained: {robomimic_visual_encoder['pretrained']}")
-                print("=================================================")
 
-        print("=========== Double-check !!! ===========")
+        print("---------------- Double Check Config ----------------")
         print("Group Norm: ", group_norm)
         print("Normalize Obs: ", normalize_obs)
-        print("=========================================")
+        print("Visual Encoder: ", robomimic_visual_encoder)
+        print("---------------------------------------------------")
         # init global state
         ObsUtils.initialize_obs_utils_with_config(config)
 

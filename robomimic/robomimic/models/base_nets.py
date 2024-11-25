@@ -12,10 +12,12 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
 import robomimic.utils.obs_utils as ObsUtils
 import robomimic.utils.tensor_utils as TensorUtils
 from robomimic.utils.python_utils import extract_class_init_kwargs_from_dict
-from robosaga.resnet import resnet18 as resnet18_no_inplace, ResNet18_Weights
+from robosaga.resnet import ResNet18_Weights
+from robosaga.resnet import resnet18 as resnet18_no_inplace
 
 CONV_ACTIVATIONS = {
     "relu": nn.ReLU,
@@ -491,7 +493,14 @@ class ResNet18Conv(ConvBase):
                 (a convolution where input channels are modified to encode spatial pixel location)
         """
         super(ResNet18Conv, self).__init__()
-        weights = ResNet18_Weights.IMAGENET1K_V1 if pretrained else None
+
+        if pretrained:
+            weights = ResNet18_Weights.IMAGENET1K_V1
+            print("VisualCore -- Backbone: ResNet18Conv (IMAGE1K_V1)")
+        else:
+            weights = None
+            print("VisualCore -- Backbone: ResNet18Conv (Random Init)")
+
         net = resnet18_no_inplace(weights=weights)
 
         if input_coord_conv:
@@ -1052,6 +1061,7 @@ class VisualCore(EncoderCore, ConvBase):
 
         # maybe make pool net
         if pool_class is not None:
+            print("VisualCore -- Pooling Method: {}".format(pool_class))
             assert isinstance(pool_class, str)
             # feed output shape of backbone to pool net
             if pool_kwargs is None:

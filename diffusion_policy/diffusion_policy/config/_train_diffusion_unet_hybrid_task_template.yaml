@@ -83,6 +83,8 @@ policy:
   normalize_obs: ${normalize_obs}
   eval_fixed_crop: True
   group_norm: ${group_norm}
+  robomimic_visual_encoder: ${robomimic_visual_encoder}
+
 
 ema:
   _target_: diffusion_policy.model.diffusion.ema_model.EMAModel
