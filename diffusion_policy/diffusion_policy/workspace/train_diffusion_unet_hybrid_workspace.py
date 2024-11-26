@@ -223,17 +223,12 @@ class TrainDiffusionUnetHybridWorkspace(BaseWorkspace):
                 step_log["train_loss"] = train_loss
 
                 # ========= eval for this epoch ==========
+
                 policy = self.model
                 if cfg.training.use_ema:
                     policy = self.ema_model
                 policy.eval()
                 self.model.eval()
-
-                # run rollout
-                if (self.epoch % cfg.training.rollout_every) == 0:
-                    runner_log = env_runner.run(policy)
-                    # log all
-                    step_log.update(runner_log)
 
                 # run validation
                 if (self.epoch % cfg.training.val_every) == 0:
@@ -263,6 +258,15 @@ class TrainDiffusionUnetHybridWorkspace(BaseWorkspace):
                         # log epoch average validation loss
                         step_log["val_loss"] = val_loss
 
+                if robosaga is not None:
+                    robosaga.unregister_hooks()
+
+                # run rollout
+                if (self.epoch % cfg.training.rollout_every) == 0 and self.epoch > 0:
+                    runner_log = env_runner.run(policy)
+                    # log all
+                    step_log.update(runner_log)
+
                 # run diffusion sampling on a training batch
                 if (self.epoch % cfg.training.sample_every) == 0:
                     with torch.no_grad():
@@ -272,7 +276,6 @@ class TrainDiffusionUnetHybridWorkspace(BaseWorkspace):
                         )
                         obs_dict = batch["obs"]
                         gt_action = batch["action"]
-
                         result = policy.predict_action(obs_dict)
                         pred_action = result["action_pred"]
                         mse = torch.nn.functional.mse_loss(pred_action, gt_action)
@@ -292,19 +295,20 @@ class TrainDiffusionUnetHybridWorkspace(BaseWorkspace):
                     if cfg.checkpoint.save_last_snapshot:
                         self.save_snapshot()
 
-                    # sanitize metric names
-                    metric_dict = dict()
-                    for key, value in step_log.items():
-                        new_key = key.replace("/", "_")
-                        metric_dict[new_key] = value
+                    if self.epoch % cfg.training.rollout_every == 0 and self.epoch > 0:
+                        # sanitize metric names
+                        metric_dict = dict()
+                        for key, value in step_log.items():
+                            new_key = key.replace("/", "_")
+                            metric_dict[new_key] = value
 
-                    # We can't copy the last checkpoint here
-                    # since save_checkpoint uses threads.
-                    # therefore at this point the file might have been empty!
-                    topk_ckpt_path = topk_manager.get_ckpt_path(metric_dict)
+                        # We can't copy the last checkpoint here
+                        # since save_checkpoint uses threads.
+                        # therefore at this point the file might have been empty!
+                        topk_ckpt_path = topk_manager.get_ckpt_path(metric_dict)
 
-                    if topk_ckpt_path is not None:
-                        self.save_checkpoint(path=topk_ckpt_path)
+                        if topk_ckpt_path is not None:
+                            self.save_checkpoint(path=topk_ckpt_path)
                 # ========= eval end for this epoch ==========
                 policy.train()
                 self.model.train()

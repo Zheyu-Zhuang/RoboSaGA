@@ -283,8 +283,6 @@ class RobomimicImageRunner(BaseImageRunner):
         n_inits = len(self.env_init_fn_dills)
         n_chunks = math.ceil(n_inits / n_envs)
 
-        print(n_chunks)
-
         # allocate data
         all_video_paths = [None] * n_inits
         all_rewards = [None] * n_inits
