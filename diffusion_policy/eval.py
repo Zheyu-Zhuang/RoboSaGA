@@ -24,14 +24,25 @@ from diffusion_policy.workspace.base_workspace import BaseWorkspace
 
 
 @click.command()
-@click.option("-c", "--checkpoint", required=True)
-@click.option("-l", "lighting_mode", default="default")
-@click.option("-o", "--output_dir", required=True)
 @click.option("-d", "--device", default="cuda:0")
-@click.option("--distractors", is_flag=True, default=False) 
-@click.option("--rand_texture", is_flag=True, default=False)
-
-def main(checkpoint, output_dir, device, distractors, rand_texture, lighting_mode):
+@click.option("-c", "--checkpoint", required=True)
+@click.option("-n", "--n_eval_rollouts", default=50)
+@click.option("-o", "--output_dir", required=True)
+# Add options for visual domain shifts
+@click.option("--lighting_and_shadow", is_flag=True, default=False)
+@click.option("--lighting", is_flag=True, default=False)
+@click.option("--distractors", is_flag=True, default=False)
+@click.option("--backgrounds", is_flag=True, default=False)
+def main(
+    checkpoint,
+    output_dir,
+    device,
+    n_eval_rollouts,
+    lighting_and_shadow,
+    lighting,
+    distractors,
+    backgrounds,
+):
     # if os.path.exists(output_dir):
     #     click.confirm(f"Output path {output_dir} already exists! Overwrite?", abort=True)
     pathlib.Path(output_dir).mkdir(parents=True, exist_ok=True)
@@ -54,10 +65,19 @@ def main(checkpoint, output_dir, device, distractors, rand_texture, lighting_mod
     policy.eval()
 
     # run eval
-    n_eval_rollouts = 50
+    assert not (
+        lighting_and_shadow and lighting
+    ), "Cannot have both lighting and shadow and lighting"
+
+    lighting_mode = "default"
+    if lighting:
+        lighting_mode = "lighting"
+    elif lighting_and_shadow:
+        lighting_mode = "lighting_and_shadow"
+
     with open_dict(cfg):
         cfg.task.env_runner.distractors = distractors
-        cfg.task.env_runner.rand_texture = rand_texture
+        cfg.task.env_runner.rand_texture = backgrounds
         cfg.task.env_runner.lighting_mode = lighting_mode
         cfg.task.env_runner.n_train = 0
         cfg.task.env_runner.n_test = n_eval_rollouts
