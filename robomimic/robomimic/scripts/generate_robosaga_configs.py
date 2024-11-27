@@ -15,7 +15,7 @@ def generate_saga_configs(config_dir, task, background_dir, data_dir, exp_dir):
             "debug_save": True,
             "buffer_shape": [84, 84],
             "save_dir": "",
-            "save_debug_im_every_n_batches": 100,
+            "save_debug_im_every_n_batches": 50,
             "background_path": background_dir,
             "aug_strategy": "robosaga",
             "saliency_erase_threshold": 0.5,  # threshold for erasing saliency
@@ -44,7 +44,7 @@ def generate_saga_configs(config_dir, task, background_dir, data_dir, exp_dir):
             "background_path": background_dir,
             "saliency_erase_threshold": 0.5,  # threshold for erasing saliency
             "blend_alpha": 0.5,  # blending alpha for blending random overlay
-            "saliency_saga_cap": 0.8,  # the cap for saliency values in RoboSaGA
+            "saliency_saga_cap": 0.9,  # the cap for saliency values in RoboSaGA
         },
         "train": {"color_jitter": False},
     }
@@ -70,9 +70,6 @@ def generate_saga_configs(config_dir, task, background_dir, data_dir, exp_dir):
             for key, value in saga_exp_configs.items():
                 #
                 config_temp = copy.deepcopy(task_configs)
-                config_temp["observation"]["encoder"]["rgb"]["core_kwargs"]["backbone_kwargs"][
-                    "pretrained"
-                ] = "true"
                 config_temp["observation"]["encoder"]["rgb"]["core_kwargs"][
                     "pool_class"
                 ] = "SpatialMeanPool"

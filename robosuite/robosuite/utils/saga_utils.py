@@ -12,6 +12,30 @@ from robosuite.models.objects import (
     MilkObject,
 )
 
+# fix the random seed for reproducibility
+
+random.seed(0)
+
+
+def get_robosuite_path():
+    this_file_path = os.path.abspath(__file__)
+    return os.path.join(os.path.dirname(this_file_path), "../../../robosuite")
+
+
+def get_all_texture_paths(rand_texture):
+    if rand_texture is None:
+        return None
+    robosuite_path = get_robosuite_path()
+    texture_dir = os.path.join(
+        robosuite_path, "robosuite/models/assets/textures/evaluation_textures"
+    )
+    texture_dir = os.path.join(texture_dir, rand_texture)
+    texture_paths = []
+    for texture_file in os.listdir(texture_dir):
+        texture_path = os.path.join(texture_dir, texture_file)
+        texture_paths.append(texture_path)
+    return texture_paths
+
 
 def distractors_to_model(distractors, postfix=""):
     if distractors is None:
@@ -99,23 +123,3 @@ def replace_texture(xml_file, wall_textures, table_textures, floor_textures):
 def get_texture_name(texture_path):
     texture_file_name = os.path.basename(texture_path)
     return texture_file_name.split(".")[0]
-
-
-def get_robosuite_path():
-    this_file_path = os.path.abspath(__file__)
-    return os.path.join(os.path.dirname(this_file_path), "../../../robosuite")
-
-
-def get_all_texture_paths(rand_texture):
-    if rand_texture is None:
-        return None
-    robosuite_path = get_robosuite_path()
-    texture_dir = os.path.join(
-        robosuite_path, "robosuite/models/assets/textures/evaluation_textures"
-    )
-    texture_dir = os.path.join(texture_dir, rand_texture)
-    texture_paths = []
-    for texture_file in os.listdir(texture_dir):
-        texture_path = os.path.join(texture_dir, texture_file)
-        texture_paths.append(texture_path)
-    return texture_paths

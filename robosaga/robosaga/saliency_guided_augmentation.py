@@ -16,6 +16,12 @@ from robosaga.buffer_manager import BufferManager
 from robosaga.fullgrad import FullGrad
 from robosaga.tensor_extractors import EncoderOnly
 
+seed = 0
+# fix random seed for reproducibility
+torch.manual_seed(seed)
+random.seed(seed)
+np.random.seed(seed)
+
 
 class RoboSaGA:
     def __init__(self, model, normalizer=None, **kwargs):
@@ -128,6 +134,7 @@ class RoboSaGA:
         else:
             aug_idx, smaps = self.retrieve_smaps_from_buffer(buffer, golbal_idx, meta)
         bg = self.backgrounds(len(aug_idx), normalizer)
+        smaps = smaps**2  # torch.sigmoid(smaps)
         batch[aug_idx] = batch[aug_idx] * smaps + bg * (1 - smaps)
 
     def random_overlay(self, batch, normalizer):

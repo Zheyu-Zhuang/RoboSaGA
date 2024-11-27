@@ -76,7 +76,15 @@ import robosuite
 from diffusion_policy.common.pytorch_util import replace_submodules
 from robomimic.algo import RolloutPolicy
 from robomimic.envs.env_base import EnvBase
-from robosuite.utils.saga_utils import randomize_lighting, replace_texture
+from robosuite.utils.saga_utils import (
+    get_all_texture_paths,
+    randomize_lighting,
+    replace_texture,
+)
+
+floor_textures = get_all_texture_paths("floor")
+wall_textures = get_all_texture_paths("wall")
+table_textures = get_all_texture_paths("table")
 
 
 def rollout(
@@ -200,31 +208,6 @@ def rollout(
     return stats, traj
 
 
-def get_robosuite_path():
-    this_file_path = os.path.abspath(__file__)
-    return os.path.join(os.path.dirname(this_file_path), "../../../robosuite")
-
-
-def get_all_texture_paths(rand_texture):
-    if rand_texture is None:
-        return None
-    robosuite_path = get_robosuite_path()
-    texture_dir = os.path.join(
-        robosuite_path, "robosuite/models/assets/textures/evaluation_textures"
-    )
-    texture_dir = os.path.join(texture_dir, rand_texture)
-    texture_paths = []
-    for texture_file in os.listdir(texture_dir):
-        texture_path = os.path.join(texture_dir, texture_file)
-        texture_paths.append(texture_path)
-    return texture_paths
-
-
-floor_textures = get_all_texture_paths("floor")
-wall_textures = get_all_texture_paths("wall")
-table_textures = get_all_texture_paths("table")
-
-
 def run_trained_agent(args):
     # some arg checking
     write_video = args.video_path is not None
@@ -284,6 +267,7 @@ def run_trained_agent(args):
     if args.seed is not None:
         np.random.seed(args.seed)
         torch.manual_seed(args.seed)
+        random.seed(args.seed)
 
     # maybe create video writer
     video_writer = None
@@ -477,7 +461,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--seed",
         type=int,
-        default=None,
+        default=10000,
         help="(optional) set seed for rollouts",
     )
 

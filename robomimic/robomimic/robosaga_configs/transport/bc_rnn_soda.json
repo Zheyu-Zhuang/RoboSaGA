@@ -184,7 +184,7 @@
                     "flatten": true,
                     "backbone_class": "ResNet18Conv",
                     "backbone_kwargs": {
-                        "pretrained": "true",
+                        "pretrained": false,
                         "input_coord_conv": false
                     },
                     "pool_class": "SpatialMeanPool",

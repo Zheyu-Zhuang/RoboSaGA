@@ -14,6 +14,7 @@ def unnormalize_image(x, normalizer):
     x = normalizer.unnormalize(x)
     return x.view(input_shape)
 
+
 def batch_to_ims(torch_ims):
     if torch_ims is None:
         return None
@@ -34,6 +35,7 @@ def batch_to_ims(torch_ims):
     for i in range(len(cv2_ims) - 1):
         cv2_ims.insert(2 * i + 1, im_pad)
     return cv2.hconcat(cv2_ims)
+
 
 def normalize_smaps(smaps):
     if len(smaps.shape) == 4:
@@ -59,7 +61,8 @@ def pad_image(im, pad_size):
     return cv2.copyMakeBorder(
         im, pad_size, pad_size, pad_size, pad_size, cv2.BORDER_CONSTANT, value=[0, 0, 0]
     )
-    
+
+
 def get_title_banner(title, im_width, font_scale=0.8, font_thickness=1):
     banner = np.zeros((50, im_width, 3), dtype=np.uint8)
     cv2.putText(
@@ -73,6 +76,7 @@ def get_title_banner(title, im_width, font_scale=0.8, font_thickness=1):
         cv2.LINE_AA,
     )
     return banner.astype(np.uint8)
+
 
 def put_banner_on_image(im, title):
     if im is None:

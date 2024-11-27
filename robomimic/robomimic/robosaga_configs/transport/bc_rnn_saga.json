@@ -11,7 +11,7 @@
             84
         ],
         "save_dir": "",
-        "save_debug_im_every_n_batches": 100,
+        "save_debug_im_every_n_batches": 50,
         "background_path": "../data/backgrounds",
         "aug_strategy": "robosaga",
         "saliency_erase_threshold": 0.5,
@@ -199,7 +199,7 @@
                     "flatten": true,
                     "backbone_class": "ResNet18Conv",
                     "backbone_kwargs": {
-                        "pretrained": "true",
+                        "pretrained": false,
                         "input_coord_conv": false
                     },
                     "pool_class": "SpatialMeanPool",
