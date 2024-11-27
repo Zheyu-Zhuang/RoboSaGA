@@ -161,7 +161,11 @@ if __name__ == "__main__":
             os.makedirs(archive_folder)
         n_old = len(os.listdir(archive_folder))
         shutil.move(output_file, os.path.join(archive_folder, f"{mode}_stats_{n_old}.txt"))
-        print("WARNING: output file already exists, moving to archive folder")
+        user_input = input(f"WARNING: {output_file} exists, do you want to continue? (y/n): ")
+        if user_input.lower() != "y":
+            print("Exiting...")
+            exit()
+
     run_scripts_in_parallel(scripts_with_args, output_file)
     stats = get_results_string(output_file, top_n_success_rate, mode)
     print(stats)

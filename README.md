@@ -10,14 +10,8 @@ This is the official implementation of RoboSaGA, a data augmentation technique d
 📈 **The following updates have been made to RoboSaGA and the baselines compared to what was described in the paper:**
 
 ### 🔧 Tweaks
-- **Pre-trained ResNet Weights**: Loaded for faster convergence and better saliency.
 - **Average Pooling**: Replaces Spatial Softmax for better saliency. Spatial Softmax introduces a diamond-shaped gradient prior, as its gradient computation depends on the constant multipliers introduced by coordinate grids.
 
-These adjustments, particularly the combination of pre-trained weights and Average Pooling, significantly enhance policy robustness in **transport** tasks for BC-MLP and BC-RNN.
-
-
-### 🌐 Simulation Environment
-- The **transport** environment now includes background changes that affect the bottoms of all bins, introducing even more challenging visual domain shifts for testing robustness.
 
 ## TODO
 

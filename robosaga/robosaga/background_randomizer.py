@@ -8,6 +8,10 @@ from PIL import Image
 from torchvision import transforms
 from tqdm import tqdm
 
+# fix random seed for reproducibility
+torch.manual_seed(0)
+random.seed(0)
+
 
 class BackgroundRandomizer:
     """
@@ -17,6 +21,7 @@ class BackgroundRandomizer:
         im_size (tuple): The size of the images (height, width).
         backgrounds (torch.Tensor): Preloaded background images.
     """
+
     def __init__(self, **kwargs):
         assert "output_shape" in kwargs, "output_shape must be provided"
         assert "background_path" in kwargs, "background_path must be provided"
@@ -39,7 +44,9 @@ class BackgroundRandomizer:
         return normalizer(bg) if normalizer is not None else bg
 
     def __str__(self):
-        return f"BackgroundRandomizer: {self.backgrounds.shape[0]} backgrounds, size {self.im_size}"
+        return (
+            f"BackgroundRandomizer: {self.backgrounds.shape[0]} backgrounds, size {self.im_size}"
+        )
 
     def random_transform(self, bg):
         """
@@ -79,9 +86,7 @@ class BackgroundRandomizer:
         """
         print("Preloading Background Images...")
         all_f_names = os.listdir(background_path)
-        all_im_names = [
-            f_name for f_name in all_f_names if f_name.endswith((".jpg", ".png"))
-        ]
+        all_im_names = [f_name for f_name in all_f_names if f_name.endswith((".jpg", ".png"))]
 
         n_images = len(all_im_names)
         backgrounds = torch.zeros(

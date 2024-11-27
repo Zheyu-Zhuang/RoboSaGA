@@ -168,7 +168,7 @@ def create_env_from_metadata(
     use_image_obs=False,
     distractors=None,
     rand_texture=None,
-    lighting_mode="default",    
+    lighting_mode="default",
     env_id=None,
 ):
     """
@@ -208,7 +208,7 @@ def create_env_from_metadata(
         use_image_obs=use_image_obs,
         distractors=distractors,
         rand_texture=rand_texture,
-        lighting_mode=lighting_mode,    
+        lighting_mode=lighting_mode,
         env_id=env_id,
         **env_kwargs,
     )

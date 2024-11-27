@@ -11,7 +11,7 @@
         "background_path": "../data/backgrounds",
         "saliency_erase_threshold": 0.5,
         "blend_alpha": 0.5,
-        "saliency_saga_cap": 0.8,
+        "saliency_saga_cap": 0.9,
         "output_shape": [
             76,
             76
@@ -44,7 +44,7 @@
         "video_skip": 5,
         "rollout": {
             "enabled": true,
-            "n": 20,
+            "n": 50,
             "horizon": 400,
             "rate": 50,
             "warmstart": 0,
@@ -189,7 +189,7 @@
                     "flatten": true,
                     "backbone_class": "ResNet18Conv",
                     "backbone_kwargs": {
-                        "pretrained": "true",
+                        "pretrained": false,
                         "input_coord_conv": false
                     },
                     "pool_class": "SpatialMeanPool",

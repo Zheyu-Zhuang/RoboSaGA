@@ -14,21 +14,21 @@ def parse_log_file(filepath):
     matches = re.findall(pattern, content, re.DOTALL)
     for match in matches:
         experiments.append(match)
-        
+
     return experiments
 
 
-def extract_details(text_block): 
+def extract_details(text_block):
     text_block = text_block.split("\n")
     for line in text_block:
         if "Epoch" in line:
             epoch_num = int(line.split(" ")[1])
         if "Success_Rate" in line:
-            numbers = re.findall(r'\d+\.?\d*', line)
+            numbers = re.findall(r"\d+\.?\d*", line)
             success_rate = numbers[0]
         if "save checkpoint to" in line:
             checkpoint_path = line.split(" ")[-1]
-    
+
     return epoch_num, success_rate, checkpoint_path
 
 
@@ -71,5 +71,4 @@ def main(exp_path):
 if __name__ == "__main__":
     # Specify the path to the experiment directory
     exp_path = "experiments/robosaga/lift_image/bc/overlay/20240524001358/"
-    main(exp_path)    
-
+    main(exp_path)

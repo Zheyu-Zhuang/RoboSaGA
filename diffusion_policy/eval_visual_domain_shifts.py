@@ -137,15 +137,46 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-e", "--exp_path", type=str, default=None, required=True)
-    parser.add_argument("--rand_texture", action="store_true")
-    parser.add_argument("--distractors", action="store_true")
-    parser.add_argument("-l", "--lighting_mode", type=str, default="default")
-    parser.add_argument("--top_n", type=int, default=3)
-    parser.add_argument("--n_rollouts", type=int, default=50)
-    parser.add_argument("--stats_only", action="store_true")
+
+    parser.add_argument("--video", action="store_true", help="Save video of evaluation")
+
+    parser.add_argument(
+        "--vds",
+        nargs="+",
+        default=[],
+        help="Visual domain shifts to evaluate, supported: backgrounds, distractors, lighting, lighting_and_shadow",
+    )
+    parser.add_argument(
+        "--top_n", type=int, default=3, help="Number of top checkpoints to evaluate"
+    )
+    parser.add_argument(
+        "--n_rollouts", type=int, default=50, help="Number of rollouts per checkpoint"
+    )
+    parser.add_argument(
+        "--empty_scene_temp_files", action="store_true", help="Remove temp xml files"
+    )
     args = parser.parse_args()
 
-    assert args.lighting_mode in ["default", "random", "shadow"]
+    this_file_path = os.path.abspath(__file__)
+    robostuie_dir = os.path.join(os.path.dirname(this_file_path), "../../../robosuite")
+    asset_path = os.path.join(robostuie_dir, "robosuite/models/assets/arenas")
+
+    if args.empty_scene_temp_files:
+        all_files = os.listdir(asset_path)
+        print(all_files)
+        for f in all_files:
+            f_name = f.split(".")[0]
+            if "temp" in f_name.split("_"):
+                os.remove(os.path.join(asset_path, f))
+                print(f"Removed {f}")
+        exit()
+
+    for vds in args.vds:
+        if vds not in ["backgrounds", "distractors", "lighting", "lighting_and_shadow"]:
+            raise ValueError(f"Invalid visual domain shift type: {vds}")
+
+    if "lighting" in args.vds and "lighting_and_shadow" in args.vds:
+        args.vds.remove("lighting")  # lighting_and_shadow already includes lighting
 
     eval_dir = os.path.join(args.exp_path, "eval")
     if not os.path.exists(eval_dir):
@@ -153,80 +184,47 @@ if __name__ == "__main__":
 
     top_n_checkpoints, top_n_success_rate = get_top_n_experiments(args.exp_path, top_n=3)
 
+    log_file_path = os.path.join(args.exp_path, "logs/log.txt")
+    eval_dir = os.path.join(args.exp_path, "eval")
+    video_dir = os.path.join(eval_dir, "videos")
+    if not os.path.exists(video_dir):
+        os.makedirs(video_dir, exist_ok=True)
+
+    top_n_checkpoints, top_n_success_rate = get_top_n_experiments(log_file_path, n=args.top_n)
+    # in case save path changes
+    top_n_checkpoints = [os.path.basename(ckpt) for ckpt in top_n_checkpoints]
+    top_n_checkpoints = [os.path.join(args.exp_path, "models", ckpt) for ckpt in top_n_checkpoints]
+    print("\n=====================")
+
     py_script = os.path.join(os.path.dirname(os.path.realpath(__file__)), "eval.py")
+
     scripts_with_args = []
 
-    print("\n=====================")
-    # TODO: support combining different offdomain types
-
-    if args.rand_texture:
-        mode = "backgrounds"
-    elif args.distractors:
-        mode = "distractors"
-    elif args.lighting_mode == "random":
-        mode = "lighting"
-    elif args.lighting_mode == "shadow":
-        mode = "lighting_and_shadow"
-    else:
-        mode = "train_domain"
+    mode = "_".join(args.vds) if args.vds else "train_domain"
+    vds_command = [f"--{vds}" for vds in args.vds]
 
     print(f"Running evaluation for {mode} with top {args.top_n} checkpoints")
 
     for i, ckpt_path in enumerate(top_n_checkpoints):
         ckpt_name = os.path.basename(ckpt_path).replace(".pth", "")
         eval_dir_ckpt = os.path.join(args.exp_path, "eval", mode, ckpt_name)
-        if args.rand_texture:
-            scripts_with_args.append(
-                (
-                    py_script,
-                    [
-                        "--checkpoint",
-                        ckpt_path,
-                        "--rand_texture",
-                        "--output_dir",
-                        eval_dir_ckpt,
-                    ],
-                )
+        rand_id = np.random.randint(10000000)
+        scripts_with_args.append(
+            (
+                py_script,
+                [
+                    "--checkpoint",
+                    ckpt_path,
+                    "--output_dir",
+                    eval_dir_ckpt,
+                    "--n_eval_rollouts",
+                    args.n_rollouts,
+                    "--env_id",
+                    f"{mode}_env_{rand_id}",
+                ]
+                + vds_command,
             )
-        elif args.distractors:
-            scripts_with_args.append(
-                (
-                    py_script,
-                    [
-                        "--checkpoint",
-                        ckpt_path,
-                        "--output_dir",
-                        eval_dir_ckpt,
-                        "--distractors",
-                    ],
-                )
-            )
-        elif args.lighting_mode != "default":
-            scripts_with_args.append(
-                (
-                    py_script,
-                    [
-                        "--checkpoint",
-                        ckpt_path,
-                        "--output_dir",
-                        eval_dir_ckpt,
-                        "-l",
-                        args.lighting_mode,
-                    ],
-                )
-            )
-        else:
-            scripts_with_args.append(
-                (
-                    py_script,
-                    [
-                        "--checkpoint",
-                        ckpt_path,
-                        "--output_dir",
-                        eval_dir_ckpt,
-                    ],
-                )
-            )
+        )
 
     output_file = os.path.join(eval_dir, f"{mode}_stats.txt")
 
